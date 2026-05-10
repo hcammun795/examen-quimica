@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Panel del Profesor - Estadísticas</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root { --primary: #2c3e50; --accent: #3498db; }
+        body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 20px; }
+        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
+        h1 { color: var(--primary); text-align: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
+        th { background-color: var(--primary); color: white; }
+        tr:hover { background-color: #f9f9f9; }
+        .badge { padding: 5px 10px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; }
+        .badge-low { background: #ff7675; color: white; }
+        .badge-mid { background: #fdcb6e; color: #2d3436; }
+        .badge-high { background: #55efc4; color: #00b894; }
+        .loading { text-align: center; font-style: italic; color: #7f8c8d; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h1>Evolución de Alumnos</h1>
+    <div id="stats-container">
+        <p class="loading">Cargando datos de rendimiento...</p>
+    </div>
+    <button onclick="cargarEstadisticas()" style="margin-top: 20px; background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Actualizar Datos</button>
+</div>
+
+<script src="profesor.js"></script>
+</body>
+</html>
