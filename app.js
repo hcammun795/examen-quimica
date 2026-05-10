@@ -199,7 +199,7 @@ async function comprobar() {
         // 2. COMPARACIÓN
         esCorrecto = formulaAlumno === formulaDB;
     
-        console.log("Validación final:", formulaAlumno, "vs", formulaDB);
+        console.log("Validación final:", formulaAlumno, len(formulaAlumno), "vs", formulaDB, len(formulaDB));
     } else {
         // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
         respuestaCorrecta = compuestoActual[columnaObjetivo];
