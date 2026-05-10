@@ -29,18 +29,21 @@
     </div>
 
     <div id="exam-section" class="hidden">
-        <div style="display: flex; justify-content: space-between;">
-            <span id="user-email" style="font-size: 0.8rem; color: #666;"></span>
-            <button onclick="logout()" style="width: auto; padding: 2px 10px; background: #e74c3c;">Salir</button>
-        </div>
-        <hr>
-        <p id="instruccion">Cargando compuesto...</p>
-        <div id="pregunta-display" class="formula"></div>
-        <input type="text" id="respuesta-alumno" placeholder="Tu respuesta exacta..." autocomplete="off">
+    <div id="config-panel">
+        <h3>¿Qué quieres repasar?</h3>
+        <div id="lista-tipos"></div> <button onclick="empezarExamen()" style="margin-top:10px">Empezar Examen</button>
+    </div>
+
+    <div id="pregunta-panel" class="hidden">
+        <div id="stats-flotantes" style="font-size: 0.7rem; text-align: right;"></div>
+        <div id="pregunta-display" class="formula" style="font-weight: bold; font-size: 2rem;"></div>
+        <p id="instruccion"></p>
+        <input type="text" id="respuesta-alumno" placeholder="Escribe aquí...">
         <button id="btn-comprobar" onclick="comprobar()">Comprobar</button>
-        <button id="btn-siguiente" class="hidden" onclick="nuevaPregunta()" style="background: #3498db;">Siguiente Pregunta</button>
+        <button id="btn-siguiente" class="hidden" onclick="nuevaPregunta()">Siguiente</button>
         <div id="feedback" class="feedback hidden"></div>
     </div>
+</div>
 </div>
 
 <script src="app.js"></script>
