@@ -1,6 +1,6 @@
 // CONFIGURACIÓN SUPABASE (Sustituye por tus claves reales)
 const supabaseUrl = 'https://uiletyxxsmsxwjvnfziu.supabase.co/rest/v1/';
-const supabaseKey = 'TU_ANON_KEY';
+const supabaseKey = 'fddsafda';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
 let compuestoActual = null;
