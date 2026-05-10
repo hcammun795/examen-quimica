@@ -187,10 +187,22 @@ async function comprobar() {
 
     // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
     if (compuestoActual.esModoFormula) {
-        // MODO FÓRMULA: Comparamos convirtiendo AMBAS a MAYÚSCULAS
-        // Así H2o, h2o y H2O serán todas válidas.
-        respuestaCorrecta = compuestoActual.formula.trim();
-        esCorrecto = respuestaAlumno.toUpperCase() === respuestaCorrecta.toUpperCase();
+        // 1. Limpieza profunda de la base de datos: 
+        // Borramos espacios, saltos de línea y caracteres invisibles (non-printable)
+        respuestaCorrecta = compuestoActual.formula
+            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Borra caracteres invisibles específicos
+            .replace(/\s/g, '')                    // Borra cualquier espacio
+            .trim();
+    
+        // 2. Limpieza de lo que escribió el alumno
+        let alumnoLimpio = respuestaAlumno
+            .replace(/\s/g, '')
+            .toUpperCase();
+    
+        // 3. Comparación
+        esCorrecto = alumnoLimpio === respuestaCorrecta.toUpperCase();
+    
+        console.log("Validando:", alumnoLimpio, "vs", respuestaCorrecta.toUpperCase());
     } else {
         // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
         respuestaCorrecta = compuestoActual[columnaObjetivo];
