@@ -187,34 +187,28 @@ async function comprobar() {
 
     // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
     if (compuestoActual.esModoFormula) {
-        let rawDB = compuestoActual.formula;
-        let rawAlumno = respuestaAlumno;
+        const rawDB = compuestoActual.formula;
+        const rawAlumno = respuestaAlumno;
     
-        // 1. Mostrar longitudes
-        console.log(`LONGITUDES -> Alumno: ${rawAlumno.length} | DB: ${rawDB.length}`);
-    
-        // 2. Función para analizar qué hay dentro de cada string
-        const analizarCadenas = (nombre, str) => {
-            let analisis = "";
-            for (let i = 0; i < str.length; i++) {
-                analisis += `'${str[i]}' (cod:${str.charCodeAt(i)}) `;
-            }
-            console.log(`DETALLE ${nombre}:`, analisis);
+        // Función que limpia CUALQUIER carácter raro basándose en su número ASCII
+        const limpiezaProvisional = (str) => {
+            return str.split('').filter(char => {
+                const code = char.charCodeAt(0);
+                // Solo permitimos: 
+                // Números (48-57), Letras Mayus (65-90), Letras Minus (97-122), 
+                // Paréntesis (40-41) y Signos + (43) o - (45)
+                return (code >= 48 && code <= 57) || 
+                       (code >= 65 && code <= 90) || 
+                       (code >= 97 && code <= 122) ||
+                       (code === 40 || code === 41 || code === 43 || code === 45);
+            }).join('').toUpperCase();
         };
     
-        analizarCadenas("ALUMNO", rawAlumno);
-        analizarCadenas("DB", rawDB);
+        const formulaDB = limpiezaProvisional(rawDB);
+        const formulaAlumno = limpiezaProvisional(rawAlumno);
     
-        // 3. Tu lógica de limpieza que ya tenemos
-        const limpiezaTotal = (str) => {
-            if (!str) return "";
-            return str.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
-        };
-    
-        let formulaDB = limpiezaTotal(rawDB);
-        let formulaAlumno = limpiezaTotal(rawAlumno);
-    
-        console.log(`COMPARACIÓN TRAS LIMPIEZA -> [${formulaAlumno}] vs [${formulaDB}]`);
+        console.log(`COMPARACIÓN FINAL: [${formulaAlumno}] vs [${formulaDB}]`);
+        
         esCorrecto = (formulaAlumno === formulaDB);
     } else {
         // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
