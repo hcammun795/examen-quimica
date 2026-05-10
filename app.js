@@ -23,34 +23,48 @@ async function login() {
     }
 }
 
-// ESTA ES LA FUNCIÓN QUE TE FALTABA
 async function mostrarConfiguracion() {
-    // Cambiamos de pantalla
-    document.getElementById('login-section').classList.add('hidden');
-    document.getElementById('config-section').classList.remove('hidden');
+    console.log("Cambiando a pantalla de configuración...");
     
+    // Obtenemos los elementos por sus IDs correctos
+    const configPanel = document.getElementById('config-panel');
+    const loginSection = document.getElementById('login-section');
     const container = document.getElementById('lista-tipos');
-    container.innerHTML = "Cargando temas...";
 
-    // Traemos los nombres de los temas desde la tabla 'tipos_compuestos'
-    const { data, error } = await _supabase.from('tipos_compuestos').select('*');
-    
-    if (error) {
-        console.error(error);
-        container.innerHTML = "<p style='color:red'>Error al cargar categorías. Revisa las políticas RLS.</p>";
+    // Verificación de seguridad para que no vuelva a dar pantalla blanca
+    if (!configPanel || !container) {
+        console.error("No se encontró el ID 'config-panel' o 'lista-tipos' en el HTML.");
         return;
     }
 
-    if (data && data.length > 0) {
-        // Creamos los checkboxes dinámicamente
+    // Ocultamos login y mostramos configuración
+    loginSection.classList.add('hidden');
+    configPanel.classList.remove('hidden');
+    
+    container.innerHTML = "<i>Cargando temas disponibles...</i>";
+
+    try {
+        // Pedimos los datos a Supabase
+        const { data, error } = await _supabase.from('tipos_compuestos').select('*');
+        
+        if (error) throw error;
+
+        if (!data || data.length === 0) {
+            container.innerHTML = "<p style='color:orange'>⚠️ No hay temas en la tabla 'tipos_compuestos'.</p>";
+            return;
+        }
+
+        // Dibujamos la lista de checkboxes
         container.innerHTML = data.map(t => `
-            <label style="display:block; margin:10px 0; cursor:pointer;">
+            <label style="display:block; margin:10px 0; cursor:pointer; background:#f4f4f4; padding:10px; border-radius:8px;">
                 <input type="checkbox" class="tipo-check" value="${t.id}" checked> 
-                <span style="margin-left:8px;">${t.nombre}</span>
+                <span style="margin-left:8px; font-weight:bold;">${t.nombre}</span>
             </label>
         `).join('');
-    } else {
-        container.innerHTML = "<p>No se encontraron categorías en la tabla 'tipos_compuestos'.</p>";
+
+    } catch (err) {
+        console.error("Error al cargar temas:", err);
+        container.innerHTML = `<p style="color:red">Error: ${err.message}</p>`;
     }
 }
 
