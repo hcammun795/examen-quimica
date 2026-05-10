@@ -197,6 +197,16 @@ async function comprobar() {
         esCorrecto = normalizar(respuestaAlumno) === normalizar(respuestaCorrecta);
     }
 
+    if (compuestoActual.esModoFormula) {
+        respuestaCorrecta = compuestoActual.formula.trim();
+        
+        // ESTO TE DIRÁ EL ERROR EN LA CONSOLA (F12)
+        console.log("Alumno escribió:", respuestaAlumno.toUpperCase());
+        console.log("Base de datos tiene:", respuestaCorrecta.toUpperCase());
+    
+        esCorrecto = respuestaAlumno.toUpperCase() === respuestaCorrecta.toUpperCase();
+    }
+
     // 2. MOSTRAR RESULTADO VISUAL
     feedback.classList.remove('hidden');
     inputAlumno.disabled = true;
