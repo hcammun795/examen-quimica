@@ -187,19 +187,35 @@ async function comprobar() {
 
     // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
     if (compuestoActual.esModoFormula) {
-        // 1. LIMPIEZA EXTREMA (Filtro por caracteres permitidos)
-        // Este comando quita CUALQUIER cosa que no sea letra, número, paréntesis o símbolo + / -
-        const limpiarCualquierRastro = (str) => {
-            return str.replace(/[^a-zA-Z0-9()+\-]/g, '').toUpperCase();
+        let rawDB = compuestoActual.formula;
+        let rawAlumno = respuestaAlumno;
+    
+        // 1. Mostrar longitudes
+        console.log(`LONGITUDES -> Alumno: ${rawAlumno.length} | DB: ${rawDB.length}`);
+    
+        // 2. Función para analizar qué hay dentro de cada string
+        const analizarCadenas = (nombre, str) => {
+            let analisis = "";
+            for (let i = 0; i < str.length; i++) {
+                analisis += `'${str[i]}' (cod:${str.charCodeAt(i)}) `;
+            }
+            console.log(`DETALLE ${nombre}:`, analisis);
         };
     
-        let formulaDB = limpiarCualquierRastro(compuestoActual.formula);
-        let formulaAlumno = limpiarCualquierRastro(respuestaAlumno);
+        analizarCadenas("ALUMNO", rawAlumno);
+        analizarCadenas("DB", rawDB);
     
-        // 2. COMPARACIÓN
-        esCorrecto = formulaAlumno === formulaDB;
+        // 3. Tu lógica de limpieza que ya tenemos
+        const limpiezaTotal = (str) => {
+            if (!str) return "";
+            return str.toString().replace(/[^a-zA-Z0-9]/g, '').toUpperCase();
+        };
     
-        console.log("Validación final:", formulaAlumno, len(formulaAlumno), "vs", formulaDB, len(formulaDB));
+        let formulaDB = limpiezaTotal(rawDB);
+        let formulaAlumno = limpiezaTotal(rawAlumno);
+    
+        console.log(`COMPARACIÓN TRAS LIMPIEZA -> [${formulaAlumno}] vs [${formulaDB}]`);
+        esCorrecto = (formulaAlumno === formulaDB);
     } else {
         // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
         respuestaCorrecta = compuestoActual[columnaObjetivo];
