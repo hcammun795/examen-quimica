@@ -69,17 +69,16 @@ async function mostrarConfiguracion() {
 }
 
 function empezarExamen() {
-    // Miramos qué temas ha marcado el alumno
     const checks = document.querySelectorAll('.tipo-check:checked');
     tiposSeleccionados = Array.from(checks).map(c => parseInt(c.value));
     
     if (tiposSeleccionados.length === 0) {
-        alert("Por favor, selecciona al menos un tema para examinarte.");
+        alert("Selecciona al menos un tema.");
         return;
     }
     
-    // Pasamos a la pantalla de examen
-    document.getElementById('config-section').classList.add('hidden');
+    // Ocultamos el panel de configuración (antes fallaba aquí si el ID era distinto)
+    document.getElementById('config-panel').classList.add('hidden');
     document.getElementById('exam-section').classList.remove('hidden');
     nuevaPregunta();
 }
