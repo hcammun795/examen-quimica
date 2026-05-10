@@ -87,7 +87,7 @@ const traductorNombres = {
 };
 
 async function nuevaPregunta() {
-    // RESETEAR INTERFAZ
+    // 1. Limpiar interfaz
     const feedback = document.getElementById('feedback');
     if (feedback) feedback.classList.add('hidden');
     
@@ -98,53 +98,58 @@ async function nuevaPregunta() {
     document.getElementById('pregunta-display').innerText = "Cargando...";
 
     try {
-        // 1. CONSULTAR COMPUESTOS EN SUPABASE
-        // Filtramos por los temas (tipo_id) seleccionados en la pantalla anterior
+        // 2. Obtener compuestos de Supabase
         const { data, error } = await _supabase
             .from('compuestos')
             .select('*')
             .in('tipo_id', tiposSeleccionados);
 
         if (error) throw error;
-
-        // 2. VALIDACIÓN DE SEGURIDAD (Para evitar el error de "reading properties of null")
         if (!data || data.length === 0) {
-            alert("No hay compuestos disponibles para los temas seleccionados. Avisa al profesor.");
+            alert("No hay compuestos para estos temas.");
             location.reload();
             return;
         }
 
-        // 3. ELEGIR UN COMPUESTO AL AZAR
+        // 3. Seleccionar compuesto al azar
         compuestoActual = data[Math.floor(Math.random() * data.length)];
 
-        // 4. ELEGIR QUÉ TIPO DE NOMENCLATURA PREGUNTAR
-        // Filtramos solo las columnas que tengan texto en la base de datos
-        const posiblesColumnas = Object.keys(traductorNombres).filter(col => 
+        // 4. Decidir el SENTIDO de la pregunta (50% probabilidad cada uno)
+        const modoFormula = Math.random() < 0.5; 
+
+        // Buscar qué columnas de nombre tienen contenido
+        const posiblesNombres = Object.keys(traductorNombres).filter(col => 
             compuestoActual[col] && compuestoActual[col].trim() !== ""
         );
 
-        if (posiblesColumnas.length === 0) {
-            // Si el compuesto elegido no tiene ningún nombre relleno, buscamos otro
-            console.warn("Compuesto sin nombres detectado, reintentando...");
-            return nuevaPregunta();
+        if (posiblesNombres.length === 0) return nuevaPregunta();
+        columnaObjetivo = posiblesNombres[Math.floor(Math.random() * posiblesNombres.length)];
+
+        if (modoFormula) {
+            // MODO: Te doy el NOMBRE, me das la FÓRMULA
+            const nombrePregunta = compuestoActual[columnaObjetivo];
+            const tipoNomenclatura = traductorNombres[columnaObjetivo];
+            
+            document.getElementById('instruccion').innerText = `Escribe la FÓRMULA para:`;
+            document.getElementById('pregunta-display').innerHTML = `<span style="font-size: 1.5rem;">${nombrePregunta}</span><br><small style="font-size: 0.9rem; color: #666;">(${tipoNomenclatura})</small>`;
+            
+            // Guardamos que la respuesta correcta ahora es la fórmula
+            // Usamos una variable global o propiedad para saber qué comparar luego
+            compuestoActual.esModoFormula = true; 
+        } else {
+            // MODO: Te doy la FÓRMULA, me das el NOMBRE (Como antes)
+            const tipoNomenclatura = traductorNombres[columnaObjetivo];
+            
+            document.getElementById('instruccion').innerText = `Escribe el nombre (${tipoNomenclatura}):`;
+            document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
+            
+            compuestoActual.esModoFormula = false;
         }
 
-        // Elegimos una columna al azar de las disponibles
-        columnaObjetivo = posiblesColumnas[Math.floor(Math.random() * posiblesColumnas.length)];
-        
-        // 5. ACTUALIZAR PANTALLA
-        const nombreVisible = traductorNombres[columnaObjetivo];
-        document.getElementById('instruccion').innerText = `Escribe el nombre: ${nombreVisible}`;
-        
-        // Mostramos la fórmula química (formateando subíndices como el 2 de H2O)
-        document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
-        
-        // Ponemos el foco en el input para que el alumno pueda escribir rápido
         document.getElementById('respuesta-alumno').focus();
 
     } catch (err) {
-        console.error("Error en nuevaPregunta:", err);
-        document.getElementById('pregunta-display').innerText = "Error al cargar pregunta";
+        console.error("Error:", err);
     }
 }
 
@@ -171,59 +176,75 @@ function normalizar(texto) {
 }
 
 async function comprobar() {
-    const alumno = document.getElementById('respuesta-alumno').value;
-    const correcta = compuestoActual[columnaObjetivo];
-    const esCorrecto = normalizar(alumno) === normalizar(correcta);
-
+    const inputAlumno = document.getElementById('respuesta-alumno');
     const feedback = document.getElementById('feedback');
+    const btnComprobar = document.getElementById('btn-comprobar');
+    const btnSiguiente = document.getElementById('btn-siguiente');
+    
+    let respuestaAlumno = inputAlumno.value.trim();
+    let respuestaCorrecta = "";
+    let esCorrecto = false;
+
+    // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
+    if (compuestoActual.esModoFormula) {
+        // Estamos en MODO FÓRMULA: El alumno escribió una fórmula (ej: H2O)
+        respuestaCorrecta = compuestoActual.formula;
+        // En fórmulas somos estrictos con las mayúsculas/minúsculas pero quitamos espacios
+        esCorrecto = respuestaAlumno === respuestaCorrecta;
+    } else {
+        // Estamos en MODO NOMBRE: El alumno escribió una nomenclatura
+        respuestaCorrecta = compuestoActual[columnaObjetivo];
+        // En nombres usamos la función normalizar (quita tildes, mayúsculas, etc.)
+        esCorrecto = normalizar(respuestaAlumno) === normalizar(respuestaCorrecta);
+    }
+
+    // 2. MOSTRAR RESULTADO VISUAL (FEEDBACK)
     feedback.classList.remove('hidden');
-    document.getElementById('btn-comprobar').classList.add('hidden');
-    document.getElementById('btn-siguiente').classList.remove('hidden');
-    document.getElementById('respuesta-alumno').disabled = true;
+    inputAlumno.disabled = true;
+    btnComprobar.classList.add('hidden');
+    btnSiguiente.classList.remove('hidden');
 
     if (esCorrecto) {
-        feedback.innerHTML = "✅ ¡Correcto!";
+        feedback.innerHTML = "✅ ¡CORRECTO!";
         feedback.className = "feedback correct";
     } else {
-        feedback.innerHTML = `❌ Incorrecto. Era: <b>${correcta}</b>`;
+        // Si falla, le mostramos la respuesta que esperaba el sistema
+        let mostrarSolucion = compuestoActual.esModoFormula ? 
+            formatearFormula(respuestaCorrecta) : 
+            respuestaCorrecta;
+            
+        feedback.innerHTML = `❌ INCORRECTO<br><small>La respuesta era: <b>${mostrarSolucion}</b></small>`;
         feedback.className = "feedback incorrect";
     }
 
-    // --- BLOQUE DE GUARDADO CORREGIDO ---
+    // 3. GUARDAR EN LA BASE DE DATOS (ESTADÍSTICAS)
     try {
-        // 1. Obtener sesión actual
         const { data: { session } } = await _supabase.auth.getSession();
         
-        if (!session) {
-            console.error("Sesión no encontrada");
-            return;
-        }
-
-        const uid = session.user.id;
-        const tid = compuestoActual.tipo_id;
-
-        console.log(`Registrando para User: ${uid}, Tipo: ${tid}, Acierto: ${esCorrecto}`);
-
-        // 2. Llamada a la función RPC con los nuevos nombres de parámetros
-        // Dentro de la función comprobar() en app.js
-        const { data: { user } } = await _supabase.auth.getUser();
-        
-        if (user) {
-            // Usamos el NUEVO NOMBRE de la función
+        if (session) {
+            const emailLimpio = session.user.email.toLowerCase().trim();
+            
+            // Llamamos a la función que ya nos funcionaba
             const { error } = await _supabase.rpc('guardar_estadistica_alumno', { 
-                p_email_alumno: user.email,
+                p_email_alumno: emailLimpio,
                 p_tipo_id: parseInt(compuestoActual.tipo_id), 
                 p_es_acierto: esCorrecto 
             });
-        
-            if (error) {
-                console.error("Error al guardar:", error.message);
-            } else {
-                console.log("Estadística guardada con éxito.");
-            }
-        }
 
+            if (error) console.error("Error al guardar estadística:", error.message);
+        }
     } catch (e) {
-        console.error("Error en el bloque catch:", e);
+        console.error("Error en el proceso de guardado:", e);
     }
+}
+
+/** * FUNCIÓN AUXILIAR DE NORMALIZACIÓN
+ * (Asegúrate de tenerla en tu app.js para que 'comprobar' funcione)
+ */
+function normalizar(texto) {
+    if (!texto) return "";
+    return texto.toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+        .replace(/\s+/g, ' ') // Quita espacios dobles
+        .trim();
 }
