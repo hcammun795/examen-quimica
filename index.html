@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Examen de Formulación Inorgánica</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        body { font-family: sans-serif; background: #f4f4f9; display: flex; justify-content: center; padding: 20px; }
+        .card { background: white; padding: 2rem; border-radius: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); width: 100%; max-width: 500px; }
+        .hidden { display: none; }
+        input { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ccc; border-radius: 5px; box-sizing: border-box; }
+        button { width: 100%; padding: 10px; background: #2ecc71; color: white; border: none; border-radius: 5px; cursor: pointer; font-weight: bold; }
+        button:hover { background: #27ae60; }
+        .feedback { margin-top: 15px; padding: 10px; border-radius: 5px; font-weight: bold; }
+        .correct { background: #d4edda; color: #155724; }
+        .incorrect { background: #f8d7da; color: #721c24; }
+        .formula { font-size: 1.5rem; text-align: center; margin: 20px 0; color: #2c3e50; }
+    </style>
+</head>
+<body>
+
+<div class="card">
+    <div id="login-section">
+        <h2>Acceso Alumnos</h2>
+        <input type="email" id="email" placeholder="Correo electrónico">
+        <input type="password" id="password" placeholder="Contraseña">
+        <button onclick="login()">Entrar al Examen</button>
+    </div>
+
+    <div id="exam-section" class="hidden">
+        <div style="display: flex; justify-content: space-between;">
+            <span id="user-email" style="font-size: 0.8rem; color: #666;"></span>
+            <button onclick="logout()" style="width: auto; padding: 2px 10px; background: #e74c3c;">Salir</button>
+        </div>
+        <hr>
+        <p id="instruccion">Cargando compuesto...</p>
+        <div id="pregunta-display" class="formula"></div>
+        <input type="text" id="respuesta-alumno" placeholder="Tu respuesta exacta..." autocomplete="off">
+        <button id="btn-comprobar" onclick="comprobar()">Comprobar</button>
+        <button id="btn-siguiente" class="hidden" onclick="nuevaPregunta()" style="background: #3498db;">Siguiente Pregunta</button>
+        <div id="feedback" class="feedback hidden"></div>
+    </div>
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
