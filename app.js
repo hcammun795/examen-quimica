@@ -78,3 +78,83 @@ function comprobar() {
         feedbackDiv.className = "feedback incorrect";
     }
 }
+
+let tiposSeleccionados = [];
+
+// Función para poner subíndices visuales
+function formatearFormula(texto) {
+    return texto.replace(/\d+/g, (match) => `<sub>${match}</sub>`);
+}
+
+// Función para normalizar texto (Quitar tildes y espacios dobles)
+function normalizar(texto) {
+    return texto
+        .toLowerCase()
+        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") // Quita tildes
+        .replace(/\s+/g, ' ') // Quita espacios dobles o triples
+        .trim();
+}
+
+async function cargarTipos() {
+    const { data } = await _supabase.from('tipos_compuestos').select('*');
+    const contenedor = document.getElementById('lista-tipos');
+    contenedor.innerHTML = data.map(t => `
+        <label><input type="checkbox" value="${t.id}" checked> ${t.nombre}</label><br>
+    `).join('');
+}
+
+function empezarExamen() {
+    const checks = document.querySelectorAll('#lista-tipos input:checked');
+    tiposSeleccionados = Array.from(checks).map(c => c.value);
+    if (tiposSeleccionados.length === 0) return alert("Selecciona al menos un tipo");
+    
+    document.getElementById('config-panel').classList.add('hidden');
+    document.getElementById('pregunta-panel').classList.remove('hidden');
+    nuevaPregunta();
+}
+
+async function nuevaPregunta() {
+    // ... (Lógica anterior de resetear UI) ...
+
+    const { data } = await _supabase
+        .from('compuestos')
+        .select('*, tipos_compuestos(nombre)')
+        .in('tipo_id', tiposSeleccionados);
+
+    compuestoActual = data[Math.floor(Math.random() * data.length)];
+    
+    // Mostramos la fórmula con subíndices usando innerHTML
+    document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
+    // ... (resto de lógica de elección de columna) ...
+}
+
+async function registrarEstadistica(esAcierto) {
+    const { data: { user } } = await _supabase.auth.getUser();
+    
+    // Lógica de "Upsert": si existe actualiza, si no crea
+    const { data } = await _supabase.rpc('registrar_intento', { 
+        arg_user_id: user.id, 
+        arg_tipo_id: compuestoActual.tipo_id, 
+        es_acierto: esAcierto 
+    });
+}
+
+function comprobar() {
+    const alumnoRaw = document.getElementById('respuesta-alumno').value;
+    const correctaRaw = compuestoActual[columnaObjetivo];
+
+    const esCorrecto = normalizar(alumnoRaw) === normalizar(correctaRaw);
+    
+    registrarEstadistica(esCorrecto);
+
+    const feedback = document.getElementById('feedback');
+    feedback.classList.remove('hidden');
+    if (esCorrecto) {
+        feedback.innerHTML = "¡Correcto!";
+        feedback.className = "feedback correct";
+    } else {
+        feedback.innerHTML = `Incorrecto. Era: <b>${correctaRaw}</b>`;
+        feedback.className = "feedback incorrect";
+    }
+    // ... (mostrar botones) ...
+}
