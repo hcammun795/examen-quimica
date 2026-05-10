@@ -173,22 +173,24 @@ async function comprobar() {
         console.log(`Registrando para User: ${uid}, Tipo: ${tid}, Acierto: ${esCorrecto}`);
 
         // 2. Llamada a la función RPC con los nuevos nombres de parámetros
+        // Dentro de la función comprobar() en app.js
         const { data: { user } } = await _supabase.auth.getUser();
-
-        // Cambia la llamada al RPC por esta:
-        await _supabase.rpc('registrar_intento_por_email', { 
-            p_email: user.email, // <--- Ahora enviamos el email
-            p_tipo_id: compuestoActual.tipo_id, 
-            p_es_acierto: esCorrecto 
-        });
-
-        if (error) {
-            console.error("Error RPC:", error);
-            // Esto te ayudará a ver el error real en pantalla mientras pruebas
-            alert("Error al guardar: " + error.message);
-        } else {
-            console.log("Estadística actualizada con éxito.");
+        
+        if (user) {
+            // Usamos el NUEVO NOMBRE de la función
+            const { error } = await _supabase.rpc('guardar_estadistica_alumno', { 
+                p_email_alumno: user.email,
+                p_tipo_id: parseInt(compuestoActual.tipo_id), 
+                p_es_acierto: esCorrecto 
+            });
+        
+            if (error) {
+                console.error("Error al guardar:", error.message);
+            } else {
+                console.log("Estadística guardada con éxito.");
+            }
         }
+
     } catch (e) {
         console.error("Error en el bloque catch:", e);
     }
