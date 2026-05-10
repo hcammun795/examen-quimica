@@ -202,7 +202,8 @@ async function comprobar() {
         const fAlumno = limpiarCerebro(textoAlumno);
         const fDB = limpiarCerebro(textoDB);
     
-        // 3. COMPARACIÓN REAL
+        // 3. COMPARACIÓN REAL        
+        respuestaCorrecta = compuestoActual.formula;
         esCorrecto = (fAlumno === fDB);
     
         // 4. DIAGNÓSTICO FINAL (Si esto falla, el universo es distinto)
