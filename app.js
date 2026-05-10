@@ -187,33 +187,29 @@ async function comprobar() {
 
     // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
     if (compuestoActual.esModoFormula) {
-        // 1. Función de limpieza ultra-agresiva
-        const limpiar = (texto) => {
-            if (!texto) return "";
-            return texto.toString()
-                .split('')
-                .filter(char => {
-                    const c = char.charCodeAt(0);
-                    // Solo dejamos: A-Z (65-90), a-z (97-122), 0-9 (48-57), (), +, -
-                    return (c >= 48 && c <= 57) || (c >= 65 && c <= 90) || 
-                           (c >= 97 && c <= 122) || [40, 41, 43, 45].includes(c);
-                })
-                .join('')
-                .toUpperCase()
-                .trim(); // Por si acaso
+        // 1. Capturamos los valores
+        const textoDB = compuestoActual.formula || "";
+        const textoAlumno = respuestaAlumno || "";
+    
+        // 2. Limpieza Radical: Solo permitimos caracteres básicos del teclado
+        const limpiarCerebro = (t) => {
+            return t.toString()
+                .replace(/[^a-zA-Z0-9()+\-]/g, '') // Elimina CUALQUIER cosa que no sea esto
+                .trim()
+                .toUpperCase();
         };
     
-        // 2. Limpiamos ambas variables
-        const formulaDB = limpiar(compuestoActual.formula);
-        const formulaAlumno = limpiar(respuestaAlumno);
+        const fAlumno = limpiarCerebro(textoAlumno);
+        const fDB = limpiarCerebro(textoDB);
     
-        // 3. COMPARACIÓN DIRECTA
-        esCorrecto = (formulaAlumno === formulaDB);
+        // 3. COMPARACIÓN REAL
+        esCorrecto = (fAlumno === fDB);
     
-        // 4. LOG DE EMERGENCIA (Para ver si realmente son iguales bit a bit)
-        console.log(`¿Es correcto?: ${esCorrecto}`);
-        console.log(`Final Alumno: "${formulaAlumno}" (Largo: ${formulaAlumno.length})`);
-        console.log(`Final DB: "${formulaDB}" (Largo: ${formulaDB.length})`);
+        // 4. DIAGNÓSTICO FINAL (Si esto falla, el universo es distinto)
+        console.log(`--- CHEQUEO FINAL ---`);
+        console.log(`Limpia Alumno: "${fAlumno}" | Longitud: ${fAlumno.length}`);
+        console.log(`Limpia DB:     "${fDB}" | Longitud: ${fDB.length}`);
+        console.log(`¿Son iguales?: ${fAlumno === fDB}`);
 
     } else {
         // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
