@@ -1,5 +1,5 @@
 // CONFIGURACIÓN SUPABASE (Sustituye por tus claves reales)
-const supabaseUrl = 'https://uiletyxxsmsxwjvnfziu.supabase.co/';
+const supabaseUrl = 'https://uiletyxxsmsxwjvnfziu.supabase.co';
 const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpbGV0eXh4c21zeHdqdm5meml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMTM1NzUsImV4cCI6MjA5Mzg4OTU3NX0.d-QGKtt6IQxwfKRw7rEhFF3VGF_x9xIgf_2k4jkSIAk';
 const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
