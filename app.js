@@ -187,18 +187,17 @@ async function comprobar() {
 
     // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
     if (compuestoActual.esModoFormula) {
-        // Estamos en MODO FÓRMULA: El alumno escribió una fórmula (ej: H2O)
-        respuestaCorrecta = compuestoActual.formula;
-        // En fórmulas somos estrictos con las mayúsculas/minúsculas pero quitamos espacios
-        esCorrecto = respuestaAlumno === respuestaCorrecta;
+        // MODO FÓRMULA: Comparamos convirtiendo AMBAS a MAYÚSCULAS
+        // Así H2o, h2o y H2O serán todas válidas.
+        respuestaCorrecta = compuestoActual.formula.trim();
+        esCorrecto = respuestaAlumno.toUpperCase() === respuestaCorrecta.toUpperCase();
     } else {
-        // Estamos en MODO NOMBRE: El alumno escribió una nomenclatura
+        // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
         respuestaCorrecta = compuestoActual[columnaObjetivo];
-        // En nombres usamos la función normalizar (quita tildes, mayúsculas, etc.)
         esCorrecto = normalizar(respuestaAlumno) === normalizar(respuestaCorrecta);
     }
 
-    // 2. MOSTRAR RESULTADO VISUAL (FEEDBACK)
+    // 2. MOSTRAR RESULTADO VISUAL
     feedback.classList.remove('hidden');
     inputAlumno.disabled = true;
     btnComprobar.classList.add('hidden');
@@ -208,33 +207,27 @@ async function comprobar() {
         feedback.innerHTML = "✅ ¡CORRECTO!";
         feedback.className = "feedback correct";
     } else {
-        // Si falla, le mostramos la respuesta que esperaba el sistema
-        let mostrarSolucion = compuestoActual.esModoFormula ? 
+        // Si es modo fórmula, mostramos la fórmula bonita con subíndices
+        let solucionVisual = compuestoActual.esModoFormula ? 
             formatearFormula(respuestaCorrecta) : 
             respuestaCorrecta;
             
-        feedback.innerHTML = `❌ INCORRECTO<br><small>La respuesta era: <b>${mostrarSolucion}</b></small>`;
+        feedback.innerHTML = `❌ INCORRECTO<br><small>La respuesta era: <b>${solucionVisual}</b></small>`;
         feedback.className = "feedback incorrect";
     }
 
-    // 3. GUARDAR EN LA BASE DE DATOS (ESTADÍSTICAS)
+    // 3. GUARDAR ESTADÍSTICAS
     try {
         const { data: { session } } = await _supabase.auth.getSession();
-        
         if (session) {
-            const emailLimpio = session.user.email.toLowerCase().trim();
-            
-            // Llamamos a la función que ya nos funcionaba
-            const { error } = await _supabase.rpc('guardar_estadistica_alumno', { 
-                p_email_alumno: emailLimpio,
+            await _supabase.rpc('guardar_estadistica_alumno', { 
+                p_email_alumno: session.user.email.toLowerCase().trim(),
                 p_tipo_id: parseInt(compuestoActual.tipo_id), 
                 p_es_acierto: esCorrecto 
             });
-
-            if (error) console.error("Error al guardar estadística:", error.message);
         }
     } catch (e) {
-        console.error("Error en el proceso de guardado:", e);
+        console.error("Error al guardar:", e);
     }
 }
 
