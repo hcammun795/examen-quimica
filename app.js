@@ -76,6 +76,7 @@ function empezarExamen() {
 /**
  * 2. LÓGICA DE PREGUNTAS
  */
+// 1. Traductor de nombres técnicos a nombres legibles para el alumno
 const traductorNombres = {
     'nombre_prefijos': 'Nomenclatura de Prefijos (Sistemática)',
     'nombre_num_oxi': 'Nomenclatura de Número de Oxidación (Stock)',
@@ -86,28 +87,72 @@ const traductorNombres = {
 };
 
 async function nuevaPregunta() {
-    // ... (resto del código de limpieza de interfaz)
+    // RESETEAR INTERFAZ
+    const feedback = document.getElementById('feedback');
+    if (feedback) feedback.classList.add('hidden');
+    
+    document.getElementById('btn-siguiente').classList.add('hidden');
+    document.getElementById('btn-comprobar').classList.remove('hidden');
+    document.getElementById('respuesta-alumno').value = "";
+    document.getElementById('respuesta-alumno').disabled = false;
+    document.getElementById('pregunta-display').innerText = "Cargando...";
 
-    // 2. Elegimos las columnas que tienen datos en el compuesto actual
-    const posibles = Object.keys(traductorNombres).filter(col => 
-        compuestoActual[col] && compuestoActual[col].trim() !== ""
-    );
+    try {
+        // 1. CONSULTAR COMPUESTOS EN SUPABASE
+        // Filtramos por los temas (tipo_id) seleccionados en la pantalla anterior
+        const { data, error } = await _supabase
+            .from('compuestos')
+            .select('*')
+            .in('tipo_id', tiposSeleccionados);
 
-    if (posibles.length === 0) {
-        nuevaPregunta(); // Si no hay nombres, busca otro compuesto
-        return;
+        if (error) throw error;
+
+        // 2. VALIDACIÓN DE SEGURIDAD (Para evitar el error de "reading properties of null")
+        if (!data || data.length === 0) {
+            alert("No hay compuestos disponibles para los temas seleccionados. Avisa al profesor.");
+            location.reload();
+            return;
+        }
+
+        // 3. ELEGIR UN COMPUESTO AL AZAR
+        compuestoActual = data[Math.floor(Math.random() * data.length)];
+
+        // 4. ELEGIR QUÉ TIPO DE NOMENCLATURA PREGUNTAR
+        // Filtramos solo las columnas que tengan texto en la base de datos
+        const posiblesColumnas = Object.keys(traductorNombres).filter(col => 
+            compuestoActual[col] && compuestoActual[col].trim() !== ""
+        );
+
+        if (posiblesColumnas.length === 0) {
+            // Si el compuesto elegido no tiene ningún nombre relleno, buscamos otro
+            console.warn("Compuesto sin nombres detectado, reintentando...");
+            return nuevaPregunta();
+        }
+
+        // Elegimos una columna al azar de las disponibles
+        columnaObjetivo = posiblesColumnas[Math.floor(Math.random() * posiblesColumnas.length)];
+        
+        // 5. ACTUALIZAR PANTALLA
+        const nombreVisible = traductorNombres[columnaObjetivo];
+        document.getElementById('instruccion').innerText = `Escribe el nombre: ${nombreVisible}`;
+        
+        // Mostramos la fórmula química (formateando subíndices como el 2 de H2O)
+        document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
+        
+        // Ponemos el foco en el input para que el alumno pueda escribir rápido
+        document.getElementById('respuesta-alumno').focus();
+
+    } catch (err) {
+        console.error("Error en nuevaPregunta:", err);
+        document.getElementById('pregunta-display').innerText = "Error al cargar pregunta";
     }
-
-    columnaObjetivo = posibles[Math.floor(Math.random() * posibles.length)];
-    
-    // 3. Mostramos el nombre "traducido" en el HTML
-    const nombreVisible = traductorNombres[columnaObjetivo];
-    document.getElementById('instruccion').innerText = `Escribe el nombre: ${nombreVisible}`;
-    
-    document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
-    document.getElementById('respuesta-alumno').focus();
 }
 
+// Función auxiliar para que el texto H2O se vea como H₂O en el navegador
+function formatearFormula(texto) {
+    if (!texto) return "";
+    return texto.replace(/\d+/g, (match) => `<sub>${match}</sub>`);
+}
 /**
  * 3. VALIDACIÓN Y UTILIDADES
  */
