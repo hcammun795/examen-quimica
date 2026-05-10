@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Examen de Química - Profesor</title>
+    <title>Examen de Química - Panel del Alumno</title>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root { --primary: #3498db; --success: #2ecc71; --error: #e74c3c; --dark: #2c3e50; }
@@ -20,12 +20,11 @@
         }
         button:hover { filter: brightness(0.9); }
         .type-selector { background: #f9f9f9; padding: 15px; border-radius: 8px; margin: 15px 0; border: 1px solid #eee; max-height: 250px; overflow-y: auto; }
-        .formula { font-size: 2.5rem; text-align: center; margin: 20px 0; color: var(--dark); letter-spacing: 2px; }
+        .formula { font-size: 2.5rem; text-align: center; margin: 20px 0; color: var(--dark); letter-spacing: 2px; min-height: 60px; }
         sub { font-size: 1.2rem; bottom: -0.2em; color: var(--primary); }
         .feedback { padding: 15px; border-radius: 8px; margin-top: 20px; text-align: center; font-weight: bold; }
         .correct { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
         .incorrect { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
-        .stats-info { font-size: 0.8rem; color: #7f8c8d; text-align: center; margin-bottom: 10px; }
     </style>
 </head>
 <body>
@@ -40,7 +39,7 @@
 
     <div id="config-panel" class="hidden">
         <h3>¿Qué quieres repasar?</h3>
-        <p style="text-align:center; color:#666;">Selecciona los temas para filtrar las preguntas:</p>
+        <p style="text-align:center; color:#666;">Selecciona los temas:</p>
         <div id="lista-tipos" class="type-selector">
             Cargando temas...
         </div>
@@ -55,80 +54,14 @@
         <hr>
         <p id="instruccion" style="text-align:center; color:#666; font-style:italic; margin-top:15px;"></p>
         <div id="pregunta-display" class="formula"></div>
-        <input type="text" id="respuesta-alumno" placeholder="Tu respuesta (sin tildes)..." autocomplete="off">
+        <input type="text" id="respuesta-alumno" placeholder="Escribe tu respuesta..." autocomplete="off">
         <button id="btn-comprobar" onclick="comprobar()">Comprobar</button>
         
         <div id="feedback" class="feedback hidden"></div>
-        <button id="btn-siguiente" class="hidden" onclick="nuevaPregunta()" style="background:var(--dark)">Siguiente Pregunta</button>
+        <button id="btn-siguiente" class="hidden" onclick="nuevaPregunta()" style="background:var(--dark)">Siguiente Compuesto</button>
     </div>
 </div>
 
-<script>
-// --- CONFIGURACIÓN SUPABASE ---
-// SUSTITUYE ESTOS VALORES CON TUS CLAVES REALES
-const supabaseUrl = 'TU_URL_DE_SUPABASE';
-const supabaseKey = 'TU_ANON_KEY_DE_SUPABASE';
-const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
-
-let compuestoActual = null;
-let columnaObjetivo = "";
-let tiposSeleccionados = [];
-
-// --- UTILIDADES ---
-
-// Formatea H2O -> H₂O
-function formatearSubindices(texto) {
-    if (!texto) return "";
-    return texto.replace(/\d+/g, (match) => `<sub>${match}</sub>`);
-}
-
-// Quita tildes, mayúsculas y espacios dobles
-function normalizarTexto(texto) {
-    if (!texto) return "";
-    return texto.toLowerCase()
-        .normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
-        .replace(/\s+/g, ' ') 
-        .trim();
-}
-
-// --- FLUJO DE LA APLICACIÓN ---
-
-async function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    
-    const { data, error } = await _supabase.auth.signInWithPassword({ email, password });
-    
-    if (error) {
-        alert("Error: " + error.message);
-    } else {
-        document.getElementById('user-display').innerText = data.user.email;
-        mostrarConfiguracion();
-    }
-}
-
-async function mostrarConfiguracion() {
-    // Cambiar de pantalla
-    document.getElementById('login-section').classList.add('hidden');
-    const panel = document.getElementById('config-panel');
-    panel.classList.remove('hidden');
-    
-    const container = document.getElementById('lista-tipos');
-    container.innerHTML = "<i>Cargando temas...</i>";
-
-    // Obtener temas de la base de datos
-    const { data, error } = await _supabase.from('tipos_compuestos').select('*');
-    
-    if (error) {
-        container.innerHTML = `<p style="color:red">Error: ${error.message}</p>`;
-        return;
-    }
-
-    if (data && data.length > 0) {
-        container.innerHTML = data.map(t => `
-            <label style="display:flex; align-items:center; margin:10px 0; cursor:pointer;">
-                <input type="checkbox" class="tipo-check" value="${t.id}" checked style="width:20px; height:20px;">
-                <span style="margin-left:10px; font-weight:500;">${t.nombre}</span>
-            </label>
-        `).join('');
-    } else
+<script src="app.js"></script>
+</body>
+</html>
