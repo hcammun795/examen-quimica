@@ -173,9 +173,12 @@ async function comprobar() {
         console.log(`Registrando para User: ${uid}, Tipo: ${tid}, Acierto: ${esCorrecto}`);
 
         // 2. Llamada a la función RPC con los nuevos nombres de parámetros
-        const { error } = await _supabase.rpc('registrar_intento', { 
-            p_user_id: uid, 
-            p_tipo_id: tid, 
+        const { data: { user } } = await _supabase.auth.getUser();
+
+        // Cambia la llamada al RPC por esta:
+        await _supabase.rpc('registrar_intento_por_email', { 
+            p_email: user.email, // <--- Ahora enviamos el email
+            p_tipo_id: compuestoActual.tipo_id, 
             p_es_acierto: esCorrecto 
         });
 
