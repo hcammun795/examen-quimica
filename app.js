@@ -141,7 +141,6 @@ function normalizar(texto) {
 async function comprobar() {
     const alumno = document.getElementById('respuesta-alumno').value;
     const correcta = compuestoActual[columnaObjetivo];
-
     const esCorrecto = normalizar(alumno) === normalizar(correcta);
 
     const feedback = document.getElementById('feedback');
@@ -151,22 +150,43 @@ async function comprobar() {
     document.getElementById('respuesta-alumno').disabled = true;
 
     if (esCorrecto) {
-        feedback.innerText = "✅ ¡Correcto!";
+        feedback.innerHTML = "✅ ¡Correcto!";
         feedback.className = "feedback correct";
     } else {
         feedback.innerHTML = `❌ Incorrecto. Era: <b>${correcta}</b>`;
         feedback.className = "feedback incorrect";
     }
 
-    // Guardar estadística en Supabase
+    // --- BLOQUE DE GUARDADO CORREGIDO ---
     try {
-        const { data: { user } } = await _supabase.auth.getUser();
-        await _supabase.rpc('registrar_intento', { 
-            arg_user_id: user.id, 
-            arg_tipo_id: compuestoActual.tipo_id, 
-            es_acierto: esCorrecto 
+        // 1. Obtener sesión actual
+        const { data: { session } } = await _supabase.auth.getSession();
+        
+        if (!session) {
+            console.error("Sesión no encontrada");
+            return;
+        }
+
+        const uid = session.user.id;
+        const tid = compuestoActual.tipo_id;
+
+        console.log(`Registrando para User: ${uid}, Tipo: ${tid}, Acierto: ${esCorrecto}`);
+
+        // 2. Llamada a la función RPC con los nuevos nombres de parámetros
+        const { error } = await _supabase.rpc('registrar_intento', { 
+            p_user_id: uid, 
+            p_tipo_id: tid, 
+            p_es_acierto: esCorrecto 
         });
+
+        if (error) {
+            console.error("Error RPC:", error);
+            // Esto te ayudará a ver el error real en pantalla mientras pruebas
+            alert("Error al guardar: " + error.message);
+        } else {
+            console.log("Estadística actualizada con éxito.");
+        }
     } catch (e) {
-        console.warn("Estadística no guardada (¿falta función RPC?)");
+        console.error("Error en el bloque catch:", e);
     }
 }
