@@ -76,49 +76,36 @@ function empezarExamen() {
 /**
  * 2. LÓGICA DE PREGUNTAS
  */
+const traductorNombres = {
+    'nombre_prefijos': 'Nomenclatura de Prefijos (Sistemática)',
+    'nombre_num_oxi': 'Nomenclatura de Número de Oxidación (Stock)',
+    'nombre_tradicional': 'Nomenclatura Tradicional',
+    'nombre_ac_hidracidos': 'Ácido Hidrácido',
+    'nombre_hidru_prog': 'Hidruro Progenitor',
+    'nombre_composicion': 'Nomenclatura de Composición'
+};
 
 async function nuevaPregunta() {
-    // Resetear Interfaz
-    const feedback = document.getElementById('feedback');
-    feedback.classList.add('hidden');
-    document.getElementById('btn-siguiente').classList.add('hidden');
-    document.getElementById('btn-comprobar').classList.remove('hidden');
-    document.getElementById('respuesta-alumno').value = "";
-    document.getElementById('respuesta-alumno').disabled = false;
-    document.getElementById('pregunta-display').innerText = "...";
+    // ... (resto del código de limpieza de interfaz)
 
-    // Consultar compuesto aleatorio del tema elegido
-    try {
-        const { data, error } = await _supabase
-            .from('compuestos')
-            .select('*')
-            .in('tipo_id', tiposSeleccionados);
+    // 2. Elegimos las columnas que tienen datos en el compuesto actual
+    const posibles = Object.keys(traductorNombres).filter(col => 
+        compuestoActual[col] && compuestoActual[col].trim() !== ""
+    );
 
-        if (error || !data || data.length === 0) {
-            alert("No se encontraron compuestos. Verifica la columna 'tipo_id'.");
-            location.reload();
-            return;
-        }
-
-        compuestoActual = data[Math.floor(Math.random() * data.length)];
-        
-        // Filtrar columnas que no estén vacías para preguntar
-        const posibles = [
-            'nombre_prefijos', 'nombre_num_oxi', 'nombre_tradicional', 
-            'nombre_ac_hidracidos', 'nombre_hidru_prog', 'nombre_composicion'
-        ].filter(col => compuestoActual[col] && compuestoActual[col].trim() !== "");
-
-        columnaObjetivo = posibles[Math.floor(Math.random() * posibles.length)];
-        
-        // Instrucción visual
-        const nombreSistema = columnaObjetivo.replace('nombre_', '').replace(/_/g, ' ');
-        document.getElementById('instruccion').innerText = `Escribe el nombre (${nombreSistema})`;
-        document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
-        document.getElementById('respuesta-alumno').focus();
-
-    } catch (err) {
-        console.error(err);
+    if (posibles.length === 0) {
+        nuevaPregunta(); // Si no hay nombres, busca otro compuesto
+        return;
     }
+
+    columnaObjetivo = posibles[Math.floor(Math.random() * posibles.length)];
+    
+    // 3. Mostramos el nombre "traducido" en el HTML
+    const nombreVisible = traductorNombres[columnaObjetivo];
+    document.getElementById('instruccion').innerText = `Escribe el nombre: ${nombreVisible}`;
+    
+    document.getElementById('pregunta-display').innerHTML = formatearFormula(compuestoActual.formula);
+    document.getElementById('respuesta-alumno').focus();
 }
 
 /**
