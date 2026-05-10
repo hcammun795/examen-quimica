@@ -187,22 +187,19 @@ async function comprobar() {
 
     // 1. DETERMINAR QUÉ ESTAMOS EVALUANDO
     if (compuestoActual.esModoFormula) {
-        // 1. Limpieza profunda de la base de datos: 
-        // Borramos espacios, saltos de línea y caracteres invisibles (non-printable)
-        respuestaCorrecta = compuestoActual.formula
-            .replace(/[\u200B-\u200D\uFEFF]/g, '') // Borra caracteres invisibles específicos
-            .replace(/\s/g, '')                    // Borra cualquier espacio
-            .trim();
+        // 1. LIMPIEZA EXTREMA (Filtro por caracteres permitidos)
+        // Este comando quita CUALQUIER cosa que no sea letra, número, paréntesis o símbolo + / -
+        const limpiarCualquierRastro = (str) => {
+            return str.replace(/[^a-zA-Z0-9()+\-]/g, '').toUpperCase();
+        };
     
-        // 2. Limpieza de lo que escribió el alumno
-        let alumnoLimpio = respuestaAlumno
-            .replace(/\s/g, '')
-            .toUpperCase();
+        let formulaDB = limpiarCualquierRastro(compuestoActual.formula);
+        let formulaAlumno = limpiarCualquierRastro(respuestaAlumno);
     
-        // 3. Comparación
-        esCorrecto = alumnoLimpio === respuestaCorrecta.toUpperCase();
+        // 2. COMPARACIÓN
+        esCorrecto = formulaAlumno === formulaDB;
     
-        console.log("Validando:", alumnoLimpio, "vs", respuestaCorrecta.toUpperCase());
+        console.log("Validación final:", formulaAlumno, "vs", formulaDB);
     } else {
         // MODO NOMBRE: Usamos la normalización (sin tildes, etc.)
         respuestaCorrecta = compuestoActual[columnaObjetivo];
