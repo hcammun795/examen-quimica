@@ -3,34 +3,348 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Panel del Profesor - Estadísticas</title>
+    <title>Panel de Control - Profesores</title>
+    
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
     <style>
-        :root { --primary: #2c3e50; --accent: #3498db; }
-        body { font-family: 'Segoe UI', sans-serif; background: #ecf0f1; padding: 20px; }
-        .container { max-width: 1000px; margin: auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 5px 15px rgba(0,0,0,0.1); }
-        h1 { color: var(--primary); text-align: center; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #ddd; }
-        th { background-color: var(--primary); color: white; }
-        tr:hover { background-color: #f9f9f9; }
-        .badge { padding: 5px 10px; border-radius: 15px; font-size: 0.85rem; font-weight: bold; }
-        .badge-low { background: #ff7675; color: white; }
-        .badge-mid { background: #fdcb6e; color: #2d3436; }
-        .badge-high { background: #55efc4; color: #00b894; }
-        .loading { text-align: center; font-style: italic; color: #7f8c8d; }
+        /* --- ESTILOS GENERALES --- */
+        :root {
+            --bg-principal: #f8fafc;
+            --azul-oscuro: #0f172a;
+            --azul-indigo: #4f46e5;
+            --texto-principal: #334155;
+            --borde: #e2e8f0;
+            --exito: #10b981;
+            --alerta: #f59e0b;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-principal);
+            color: var(--texto-principal);
+            padding: 30px;
+        }
+
+        .dashboard-container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        /* --- CABECERA --- */
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 2px solid var(--borde);
+        }
+
+        h1 {
+            color: var(--azul-oscuro);
+            font-size: 1.8rem;
+        }
+
+        .btn-refresh {
+            background-color: var(--azul-indigo);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background 0.2s;
+        }
+
+        .btn-refresh:hover {
+            background-color: #4338ca;
+        }
+
+        /* --- GRID DE TARJETAS DE ALUMNOS --- */
+        .grid-alumnos {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+        }
+
+        .tarjeta-alumno {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+            border: 1px solid var(--borde);
+            border-top: 5px solid var(--azul-indigo);
+            transition: transform 0.2s;
+        }
+
+        .tarjeta-alumno:hover {
+            transform: translateY(-2px);
+        }
+
+        .tarjeta-alumno h3 {
+            color: var(--azul-oscuro);
+            font-size: 1.1rem;
+            margin-bottom: 15px;
+            word-break: break-all;
+        }
+
+        /* --- MÉTRICAS INTERNAS --- */
+        .stats-globales {
+            display: flex;
+            justify-content: space-between;
+            background-color: #f1f5f9;
+            padding: 12px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .stat-item {
+            text-align: center;
+            flex: 1;
+        }
+
+        .stat-item:not(:last-child) {
+            border-right: 1px solid var(--borde);
+        }
+
+        .stat-val {
+            display: block;
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: var(--azul-indigo);
+        }
+
+        .stat-val.alto { color: var(--exito); }
+        .stat-val.bajo { color: var(--alerta); }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: #64748b;
+            text-transform: uppercase;
+            font-weight: 600;
+            margin-top: 2px;
+        }
+
+        /* --- CONTENEDOR DEL GRÁFICO --- */
+        .grafico-container {
+            position: relative;
+            height: 220px;
+            width: 100%;
+        }
+
+        /* --- ESTADOS DE CARGA --- */
+        .mensaje-estado {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.1rem;
+            color: #64748b;
+            grid-column: 1 / -1;
+        }
     </style>
 </head>
 <body>
 
-<div class="container">
-    <h1>Evolución de Alumnos</h1>
-    <div id="stats-container">
-        <p class="loading">Cargando datos de rendimiento...</p>
+<div class="dashboard-container">
+    <header>
+        <h1>Panel de Seguimiento Académico 🎓</h1>
+        <button onclick="cargarEstadisticas()" class="btn-refresh">🔄 Actualizar Datos</button>
+    </header>
+
+    <div id="contenedor-alumnos" class="grid-alumnos">
+        <div class="mensaje-estado">Cargando datos de Supabase...</div>
     </div>
-    <button onclick="cargarEstadisticas()" style="margin-top: 20px; background: var(--accent); color: white; border: none; padding: 10px 20px; border-radius: 5px; cursor: pointer;">Actualizar Datos</button>
 </div>
 
-<script src="profesor.js"></script>
+<script>
+    // --- CONFIGURACIÓN DE SUPABASE ---
+    // REEMPLAZA estos datos con las credenciales de tu proyecto real
+    const SUPABASE_URL = "https://TU_PROYECTO.supabase.co"; 
+    const SUPABASE_ANON_KEY = "TU_API_KEY_ANONIMA";
+    
+    // Inicializamos el cliente de Supabase si no está inicializado ya en otro script
+    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    /**
+     * Carga las estadísticas desde la vista SQL y genera la interfaz
+     */
+    async function cargarEstadisticas() {
+        const contenedor = document.getElementById('contenedor-alumnos');
+        contenedor.innerHTML = '<div class="mensaje-estado">Procesando registros de la vista...</div>';
+
+        try {
+            // 1. LEER DE LA VISTA OPTIMIZADA
+            const { data, error } = await _supabase
+                .from('vista_progreso_alumnos')
+                .select('email_alumno, nombre_tema, total_intentos, total_aciertos, porcentaje_acierto');
+
+            if (error) throw error;
+
+            if (!data || data.length === 0) {
+                contenedor.innerHTML = '<div class="mensaje-estado">Aún no hay datos registrados por los alumnos.</div>';
+                return;
+            }
+
+            // 2. AGRUPAR FILAS POR ALUMNO EN UN OBJETO
+            const alumnos = {};
+            
+            data.forEach(reg => {
+                const email = reg.email_alumno;
+                if (!email) return; // Saltar si no hay email válido
+
+                if (!alumnos[email]) {
+                    alumnos[email] = {
+                        temas: [],
+                        totalIntentos: 0,
+                        totalAciertos: 0
+                    };
+                }
+
+                // Añadimos el módulo individual
+                alumnos[email].temas.push({
+                    tema: reg.nombre_tema || "Tema sin nombre",
+                    intentos: reg.total_intentos || 0,
+                    aciertos: reg.total_aciertos || 0,
+                    porcentaje: reg.porcentaje_acierto || 0
+                });
+
+                // Sumamos al total global del alumno
+                alumnos[email].totalIntentos += (reg.total_intentos || 0);
+                alumnos[email].totalAciertos += (reg.total_aciertos || 0);
+            });
+
+            // Limpiamos el contenedor de carga
+            contenedor.innerHTML = "";
+
+            // 3. RENDERIZAR TARJETAS EN PANTALLA
+            for (const email in alumnos) {
+                const info = alumnos[email];
+                
+                // Calcular tasa de éxito global
+                const rendimientoGlobal = info.totalIntentos > 0 
+                    ? ((info.totalAciertos / info.totalIntentos) * 100).toFixed(1) 
+                    : "0.0";
+
+                // Definir color de alerta visual según rendimiento
+                const colorClase = rendimientoGlobal >= 70 ? 'alto' : 'bajo';
+
+                // ID único para el Canvas (sin puntos ni @ para evitar conflictos con CSS/JS)
+                const canvasId = `chart-${email.replace(/[^a-zA-Z0-9]/g, '')}`;
+
+                // Estructura HTML de la tarjeta
+                const tarjeta = document.createElement('div');
+                tarjeta.className = 'tarjeta-alumno';
+                tarjeta.innerHTML = `
+                    <h3>${email}</h3>
+                    <div class="stats-globales">
+                        <div class="stat-item">
+                            <span class="stat-val">${info.totalIntentos}</span>
+                            <span class="stat-label">Ejercicios</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-val ${colorClase}">${rendimientoGlobal}%</span>
+                            <span class="stat-label">Acierto Global</span>
+                        </div>
+                    </div>
+                    <div class="grafico-container">
+                        <canvas id="${canvasId}"></canvas>
+                    </div>
+                `;
+
+                contenedor.appendChild(tarjeta);
+
+                // 4. CREAR EL GRÁFICO DE BARRAS ASOCIADO
+                construirGrafico(canvasId, info.temas);
+            }
+
+        } catch (err) {
+            console.error("Error crítico en Dashboard:", err);
+            contenedor.innerHTML = `<div class="mensaje-estado" style="color: #ef4444;">❌ Error al conectar con Supabase: ${err.message}</div>`;
+        }
+    }
+
+    /**
+     * Configura y dibuja el gráfico Chart.js para cada canvas generado
+     */
+    function construirGrafico(canvasId, datosTemas) {
+        const elemento = document.getElementById(canvasId);
+        if (!elemento) return;
+
+        const ctx = elemento.getContext('2d');
+        
+        // Filtramos para que en el gráfico solo salgan temas en los que ha practicado
+        const temasActivos = datosTemas.filter(t => t.intentos > 0);
+
+        const etiquetas = temasActivos.map(t => t.tema);
+        const porcentajes = temasActivos.map(t => t.porcentaje);
+
+        new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: etiquetas,
+                datasets: [{
+                    label: '% Éxito',
+                    data: porcentajes,
+                    backgroundColor: 'rgba(79, 70, 229, 0.7)',
+                    borderColor: 'rgba(79, 70, 229, 1)',
+                    borderWidth: 1,
+                    borderRadius: 5,
+                    barPercentage: 0.6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        max: 100,
+                        ticks: {
+                            callback: function(value) { return value + "%"; }
+                        }
+                    },
+                    x: {
+                        ticks: {
+                            font: { size: 10 },
+                            maxRotation: 30,
+                            minRotation: 0
+                        }
+                    }
+                },
+                plugins: {
+                    legend: { display: false },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                const index = context.dataIndex;
+                                const objetoTema = temasActivos[index];
+                                return ` Éxito: ${context.raw}% (${objetoTema.aciertos}/${objetoTema.intentos} aciertos)`;
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Arrancar la carga automática en cuanto se abre el navegador
+    document.addEventListener("DOMContentLoaded", () => {
+        // Ejecutar solo si has cambiado las credenciales arriba
+        if(SUPABASE_URL !== "https://TU_PROYECTO.supabase.co") {
+            cargarEstadisticas();
+        } else {
+            document.getElementById('contenedor-alumnos').innerHTML = '<div class="mensaje-estado" style="color: #f59e0b;">⚠️ Configura primero las constantes SUPABASE_URL y SUPABASE_ANON_KEY en el código.</div>';
+        }
+    });
+</script>
+
 </body>
 </html>
