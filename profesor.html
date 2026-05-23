@@ -166,12 +166,10 @@
 
 <script>
     // --- CONFIGURACIÓN DE SUPABASE ---
-    // REEMPLAZA estos datos con las credenciales de tu proyecto real
-    const SUPABASE_URL = "https://TU_PROYECTO.supabase.co"; 
-    const SUPABASE_ANON_KEY = "TU_API_KEY_ANONIMA";
-    
-    // Inicializamos el cliente de Supabase si no está inicializado ya en otro script
-    const _supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+// --- CONFIGURACIÓN SUPABASE ---
+const supabaseUrl = 'https://uiletyxxsmsxwjvnfziu.supabase.co';
+const supabaseKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVpbGV0eXh4c21zeHdqdm5meml1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzgzMTM1NzUsImV4cCI6MjA5Mzg4OTU3NX0.d-QGKtt6IQxwfKRw7rEhFF3VGF_x9xIgf_2k4jkSIAk';
+const _supabase = supabase.createClient(supabaseUrl, supabaseKey);
 
     /**
      * Carga las estadísticas desde la vista SQL y genera la interfaz
